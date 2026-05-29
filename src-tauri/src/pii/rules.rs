@@ -12,6 +12,7 @@ static PHONE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?:\+46|0046|0)[\d \-]{6,1
 static IPV4: Lazy<Regex> = Lazy::new(|| Regex::new(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}").unwrap());
 static ICD: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"[A-Z][0-9]{2}(?:\.[0-9]{1,2}[A-Z]?)?").unwrap());
+static LGH: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\blgh\.?\s*\d{1,4}\b").unwrap());
 
 /// Swedish personnummer (10/12 digits, optional `-`/`+`), validated by date + Luhn checksum.
 /// Also accepts samordningsnummer (day +60).
@@ -108,6 +109,13 @@ pub fn icd10(text: &str) -> Vec<Span> {
     out
 }
 
+/// Apartment number, e.g. "lgh 1203" — part of an address.
+pub fn lagenhet(text: &str) -> Vec<Span> {
+    LGH.find_iter(text)
+        .map(|m| Span::new(m.start(), m.end(), m.as_str(), Category::Plats, Source::Rule, 0.9))
+        .collect()
+}
+
 /// Run every rule detector over the text.
 pub fn all(text: &str) -> Vec<Span> {
     let mut v = personnummer(text);
@@ -115,6 +123,7 @@ pub fn all(text: &str) -> Vec<Span> {
     v.extend(telefon(text));
     v.extend(ip_adress(text));
     v.extend(icd10(text));
+    v.extend(lagenhet(text));
     v
 }
 

@@ -21,6 +21,7 @@ pub enum Category {
     Epost,
     IpAdress,
     Diagnos,
+    Medicin,
     Egen,
     Ovrigt,
 }
@@ -39,12 +40,13 @@ impl Category {
             Category::Epost => "E-post",
             Category::IpAdress => "IP-adress",
             Category::Diagnos => "Diagnos",
+            Category::Medicin => "Medicin",
             Category::Egen => "Egen",
             Category::Ovrigt => "Övrigt",
         }
     }
 
-    pub const ALL: [Category; 12] = [
+    pub const ALL: [Category; 13] = [
         Category::Person,
         Category::Plats,
         Category::Organisation,
@@ -55,6 +57,7 @@ impl Category {
         Category::Epost,
         Category::IpAdress,
         Category::Diagnos,
+        Category::Medicin,
         Category::Egen,
         Category::Ovrigt,
     ];

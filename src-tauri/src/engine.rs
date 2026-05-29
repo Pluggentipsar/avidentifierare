@@ -99,11 +99,14 @@ impl Engine {
         enabled: &HashSet<Category>,
         terms: &[String],
         use_ai: bool,
+        progress: &dyn Fn(&str),
     ) -> Result<Vec<Span>> {
         let mut spans: Vec<Span> = Vec::new();
 
         if MODEL_CATEGORIES.iter().any(|c| enabled.contains(c)) {
+            progress("Förbereder NER-modell…");
             self.ensure_model()?;
+            progress("Analyserar text…");
             let guard = self.model.lock().unwrap();
             if let Some(model) = guard.as_ref() {
                 spans.extend(model.detect(text)?);
@@ -112,9 +115,11 @@ impl Engine {
 
         spans.extend(rules::all(text));
         spans.extend(gazetteer::diagnoser(text));
+        spans.extend(gazetteer::mediciner(text));
         spans.extend(Dictionary::new(terms, Category::Egen, true).detect(text));
 
         if use_ai {
+            progress("Djupare granskning (AI) – kan ta ~30 s…");
             self.ensure_llm()?;
             let guard = self.llm.lock().unwrap();
             if let Some(llm) = guard.as_ref() {
@@ -132,9 +137,10 @@ impl Engine {
         enabled: Vec<Category>,
         terms: Vec<String>,
         use_ai: bool,
+        progress: &dyn Fn(&str),
     ) -> Result<AnalyzeResult> {
         let enabled: HashSet<Category> = enabled.into_iter().collect();
-        let spans = self.detect(&text, &enabled, &terms, use_ai)?;
+        let spans = self.detect(&text, &enabled, &terms, use_ai, progress)?;
         let para_ranges = vec![(0, text.len())];
         let result = build_result(&text, &spans, Vec::new());
         *self.last.lock().unwrap() = Some(Analysis { text, spans, para_ranges, source_path: None });
@@ -147,10 +153,11 @@ impl Engine {
         enabled: Vec<Category>,
         terms: Vec<String>,
         use_ai: bool,
+        progress: &dyn Fn(&str),
     ) -> Result<AnalyzeResult> {
         let doc = docio::load(&path)?;
         let enabled: HashSet<Category> = enabled.into_iter().collect();
-        let spans = self.detect(&doc.text, &enabled, &terms, use_ai)?;
+        let spans = self.detect(&doc.text, &enabled, &terms, use_ai, progress)?;
 
         let mut warnings = Vec::new();
         if doc.has_tables {
@@ -325,7 +332,9 @@ mod tests {
         let engine = test_engine();
         let text =
             "Anna Svensson har personnummer 811228-9874 och mejlar anna@example.se.".to_string();
-        let res = engine.analyze_text(text, Category::ALL.to_vec(), Vec::new(), false).unwrap();
+        let res = engine
+            .analyze_text(text, Category::ALL.to_vec(), Vec::new(), false, &|_: &str| {})
+            .unwrap();
         assert!(res.spans.iter().any(|s| s.category == Category::Person));
         assert!(res.spans.iter().any(|s| s.category == Category::Personnummer));
         assert!(res.spans.iter().any(|s| s.category == Category::Epost));
@@ -352,7 +361,9 @@ mod tests {
         )
         .unwrap();
 
-        let res = engine.analyze_file(input, Category::ALL.to_vec(), Vec::new(), false).unwrap();
+        let res = engine
+            .analyze_file(input, Category::ALL.to_vec(), Vec::new(), false, &|_: &str| {})
+            .unwrap();
         assert!(res.spans.iter().any(|s| s.category == Category::Person));
 
         let out = dir.join("avident_out.docx");
@@ -362,5 +373,26 @@ mod tests {
         println!("DOCX OUT: {}", loaded.text);
         assert!(!loaded.text.contains("Anna Svensson"));
         assert!(!loaded.text.contains("anna@example.se"));
+    }
+
+    /// Confirms the AI layer surfaces hits as Övrigt through the full pipeline. Run with:
+    /// `cargo test --release --lib engine::tests::ai_layer_surfaces_ovrigt -- --ignored --nocapture`
+    #[test]
+    #[ignore]
+    fn ai_layer_surfaces_ovrigt() {
+        let engine = test_engine();
+        let text = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../samples/veckobrev.txt"),
+        )
+        .unwrap();
+        let res = engine
+            .analyze_text(text, Category::ALL.to_vec(), Vec::new(), true, &|m: &str| println!(">> {m}"))
+            .unwrap();
+        let ovrigt = res.spans.iter().filter(|s| s.category == Category::Ovrigt).count();
+        println!("Totalt {} träffar, varav Övrigt(AI): {ovrigt}", res.spans.len());
+        for s in &res.spans {
+            println!("  [{:?}/{:?}] {}", s.category, s.source, s.text);
+        }
+        assert!(ovrigt > 0, "AI-lagret gav inga Övrigt-träffar genom pipelinen");
     }
 }

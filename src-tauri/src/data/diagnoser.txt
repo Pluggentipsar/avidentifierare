@@ -79,11 +79,17 @@ spelberoende
 
 # Somatiskt (vanligt i elevhälsa)
 epilepsi
+epileptiker
 diabetes
+diabetiker
 astma
 allergi
+allergiker
 celiaki
 glutenintolerans
+glutenintolerant
+laktosintolerans
+laktosintolerant
 cerebral pares
 downs syndrom
 down syndrom

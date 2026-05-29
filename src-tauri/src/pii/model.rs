@@ -151,18 +151,44 @@ fn map_label(label: &str) -> Option<Category> {
     }
 }
 
-/// Merge consecutive same-category tokens (separated only by whitespace) into one span.
+/// Extend `[s, e)` outward to whole-word boundaries so a partial subword match never cuts a name
+/// in the middle (which both garbles text and leaks the rest of the word).
+fn snap_to_word(text: &str, mut s: usize, mut e: usize) -> (usize, usize) {
+    while s > 0 {
+        let prev = text[..s].chars().next_back().unwrap();
+        if prev.is_alphanumeric() {
+            s -= prev.len_utf8();
+        } else {
+            break;
+        }
+    }
+    while e < text.len() {
+        let next = text[e..].chars().next().unwrap();
+        if next.is_alphanumeric() {
+            e += next.len_utf8();
+        } else {
+            break;
+        }
+    }
+    (s, e)
+}
+
+/// Merge consecutive same-category tokens into one span. Each token is first snapped to whole-word
+/// boundaries; adjacent same-category spans separated only by whitespace and/or hyphens are joined,
+/// so hyphenated/compound names ("Wilmer-Tjalve", "Bengtsson-Krok") stay a single entity.
 fn merge_token_spans(text: &str, tokens: Vec<(Category, usize, usize)>) -> Vec<Span> {
     let mut out: Vec<Span> = Vec::new();
-    for (cat, s, e) in tokens {
+    for (cat, s0, e0) in tokens {
+        let (s, e) = snap_to_word(text, s0, e0);
         if let Some(last) = out.last_mut() {
-            if last.category == cat
-                && s >= last.end
-                && text[last.end..s].chars().all(char::is_whitespace)
-            {
-                last.end = e;
-                last.text = text[last.start..e].to_string();
-                continue;
+            if last.category == cat && s >= last.start {
+                let joinable = s <= last.end
+                    || text[last.end..s].chars().all(|c| c.is_whitespace() || c == '-');
+                if joinable {
+                    last.end = last.end.max(e);
+                    last.text = text[last.start..last.end].to_string();
+                    continue;
+                }
             }
         }
         out.push(Span::new(s, e, &text[s..e], cat, Source::Model, 1.0));
@@ -183,6 +209,44 @@ mod tests {
         assert_eq!(map_label("ORG"), Some(Category::Organisation));
         assert_eq!(map_label("O"), None);
         assert_eq!(map_label("MSR"), None);
+    }
+
+    #[test]
+    fn merges_hyphenated_name_from_subwords() {
+        // Model tagged interior subwords "mer" and "Tja" of "Wilmer-Tjalve".
+        let text = "Wilmer-Tjalve kom";
+        let tokens = vec![(Category::Person, 3, 6), (Category::Person, 7, 10)];
+        let spans = merge_token_spans(text, tokens);
+        assert_eq!(spans.len(), 1);
+        assert_eq!(spans[0].text, "Wilmer-Tjalve");
+    }
+
+    #[test]
+    fn snaps_partial_token_to_full_word() {
+        let text = "Muhammeds pappa"; // model missed the genitive "s"
+        let spans = merge_token_spans(text, vec![(Category::Person, 0, 8)]);
+        assert_eq!(spans.len(), 1);
+        assert_eq!(spans[0].text, "Muhammeds");
+    }
+
+    #[test]
+    fn merges_double_surname() {
+        let text = "Lisa Bengtsson-Krok kom";
+        let tokens = vec![
+            (Category::Person, 0, 4),
+            (Category::Person, 5, 14),
+            (Category::Person, 15, 19),
+        ];
+        let spans = merge_token_spans(text, tokens);
+        assert_eq!(spans.len(), 1);
+        assert_eq!(spans[0].text, "Lisa Bengtsson-Krok");
+    }
+
+    #[test]
+    fn keeps_separate_people_split_by_comma() {
+        let text = "Anna, Erik";
+        let spans = merge_token_spans(text, vec![(Category::Person, 0, 4), (Category::Person, 6, 10)]);
+        assert_eq!(spans.len(), 2);
     }
 
     /// Loads the real bundled model and runs NER. Run with:

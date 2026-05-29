@@ -8,6 +8,7 @@ use super::{Category, Span};
 
 const DIAGNOSER: &str = include_str!("../data/diagnoser.txt");
 const DIAGNOSER_AKRONYMER: &str = include_str!("../data/diagnoser_akronymer.txt");
+const MEDICINER: &str = include_str!("../data/mediciner.txt");
 
 fn parse(raw: &str) -> Vec<String> {
     raw.lines()
@@ -21,12 +22,19 @@ static DIAGNOS_WORDS: Lazy<Dictionary> =
     Lazy::new(|| Dictionary::new(&parse(DIAGNOSER), Category::Diagnos, true));
 static DIAGNOS_ACRONYMS: Lazy<Dictionary> =
     Lazy::new(|| Dictionary::new(&parse(DIAGNOSER_AKRONYMER), Category::Diagnos, false));
+static MEDICIN_WORDS: Lazy<Dictionary> =
+    Lazy::new(|| Dictionary::new(&parse(MEDICINER), Category::Medicin, true));
 
 /// Detect diagnosis terms from the built-in gazetteer (ICD codes are handled in `rules`).
 pub fn diagnoser(text: &str) -> Vec<Span> {
     let mut v = DIAGNOS_WORDS.detect(text);
     v.extend(DIAGNOS_ACRONYMS.detect(text));
     v
+}
+
+/// Detect medication names from the built-in gazetteer.
+pub fn mediciner(text: &str) -> Vec<Span> {
+    MEDICIN_WORDS.detect(text)
 }
 
 #[cfg(test)]

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import { listen } from "@tauri-apps/api/event";
   import { open, save } from "@tauri-apps/plugin-dialog";
   import "@fontsource/instrument-serif/400.css";
   import "@fontsource/instrument-serif/400-italic.css";
@@ -29,6 +30,7 @@
     { key: "tid", label: "Tid", color: "#d97706" },
     { key: "handelse", label: "Händelse", color: "#0d9488" },
     { key: "diagnos", label: "Diagnos", color: "#b45309" },
+    { key: "medicin", label: "Medicin", color: "#a21caf" },
     { key: "egen", label: "Egen ordlista", color: "#db2777" },
     { key: "ovrigt", label: "Övrigt (AI)", color: "#64748b" },
   ];
@@ -38,8 +40,8 @@
   const IDENTITY = ["person", "personnummer", "telefon", "epost", "ip_adress", "plats", "organisation", "egen", "ovrigt"];
   const PROFILES = [
     { id: "allman", label: "Allmän", cats: IDENTITY },
-    { id: "skola", label: "Skola / Elevhälsa", cats: [...IDENTITY, "diagnos", "tid"] },
-    { id: "social", label: "Socialtjänst", cats: [...IDENTITY, "diagnos", "tid", "handelse"] },
+    { id: "skola", label: "Skola / Elevhälsa", cats: [...IDENTITY, "diagnos", "medicin"] },
+    { id: "social", label: "Socialtjänst", cats: [...IDENTITY, "diagnos", "medicin", "handelse"] },
     { id: "allt", label: "Allt", cats: ALL_KEYS },
   ];
   function profileMap(id: string): Record<string, boolean> {
@@ -66,6 +68,8 @@
   let rejected = $state<Set<number>>(new Set());
   let loading = $state(false);
   let useAi = $state(false);
+  let analyzedWithAi = $state(false);
+  let progressMsg = $state("");
   let status = $state("");
   let error = $state("");
   let toast = $state("");
@@ -74,6 +78,16 @@
   $effect(() => {
     const saved = localStorage.getItem("avident_terms");
     if (saved) terms = JSON.parse(saved);
+  });
+
+  // Live progress phases emitted from the backend during analysis.
+  $effect(() => {
+    const unlisten = listen<string>("avident:progress", (e) => {
+      progressMsg = e.payload;
+    });
+    return () => {
+      unlisten.then((f) => f());
+    };
   });
 
   function saveTerms() {
@@ -103,16 +117,19 @@
     loading = true;
     error = "";
     status = "";
+    progressMsg = useAi ? "Startar AI-granskning…" : "Analyserar…";
     try {
       const result: AnalyzeResult = sourcePath
         ? await invoke("analyze_file", { path: sourcePath, enabled: ALL_KEYS, terms, useAi })
         : await invoke("analyze_text", { text: inputText, enabled: ALL_KEYS, terms, useAi });
       analysis = result;
+      analyzedWithAi = useAi;
       rejected = new Set();
     } catch (e) {
       error = String(e);
     } finally {
       loading = false;
+      progressMsg = "";
     }
   }
 
@@ -292,8 +309,8 @@
       {#if loading}
         <div class="state">
           <div class="spinner"></div>
-          <p class="state-title">{useAi ? "Analyserar med AI…" : "Analyserar…"}</p>
-          <p class="state-sub">{useAi ? "Den lokala AI-modellen granskar texten. Det kan ta ~20 sekunder." : "Modellen laddas första gången."}</p>
+          <p class="state-title">{progressMsg || "Analyserar…"}</p>
+          <p class="state-sub">{useAi ? "Lokal AI-granskning kan ta upp till en minut första gången modellen laddas." : "Modellen laddas första gången."}</p>
         </div>
       {:else if !analysis}
         <div class="state">
@@ -303,7 +320,10 @@
         </div>
       {:else}
         <div class="review-head">
-          <div class="meta"><strong>{activeCount}</strong> av {analysis.spans.length} träffar avidentifieras</div>
+          <div class="meta">
+            <strong>{activeCount}</strong> av {analysis.spans.length} träffar avidentifieras
+            <span class="aibadge" class:on={analyzedWithAi}>{analyzedWithAi ? "AI-granskad" : "utan AI"}</span>
+          </div>
           <div class="actions">
             <button class="btn primary" onclick={copyText}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
@@ -411,6 +431,8 @@
   .review-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
   .review-head .meta { font-size: 13px; color: var(--muted); }
   .review-head .meta strong { color: var(--ink); font-weight: 700; }
+  .aibadge { margin-left: 10px; font-size: 11px; letter-spacing: .03em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--faint); }
+  .aibadge.on { background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--accent); }
   .actions { display: flex; gap: 8px; }
 
   .document {

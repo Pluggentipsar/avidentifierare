@@ -7,28 +7,36 @@ use std::path::{Path, PathBuf};
 
 use engine::{AnalyzeResult, Engine, ModelPaths};
 use pii::Category;
-use tauri::{Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 #[tauri::command]
 fn analyze_text(
+    app: AppHandle,
     engine: State<Engine>,
     text: String,
     enabled: Vec<Category>,
     terms: Vec<String>,
     use_ai: bool,
 ) -> Result<AnalyzeResult, String> {
-    engine.analyze_text(text, enabled, terms, use_ai).map_err(|e| e.to_string())
+    let progress = |m: &str| {
+        let _ = app.emit("avident:progress", m.to_string());
+    };
+    engine.analyze_text(text, enabled, terms, use_ai, &progress).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 fn analyze_file(
+    app: AppHandle,
     engine: State<Engine>,
     path: String,
     enabled: Vec<Category>,
     terms: Vec<String>,
     use_ai: bool,
 ) -> Result<AnalyzeResult, String> {
-    engine.analyze_file(PathBuf::from(path), enabled, terms, use_ai).map_err(|e| e.to_string())
+    let progress = |m: &str| {
+        let _ = app.emit("avident:progress", m.to_string());
+    };
+    engine.analyze_file(PathBuf::from(path), enabled, terms, use_ai, &progress).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
