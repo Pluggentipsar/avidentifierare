@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Avidentifierare — Modern & avskalad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #111214;
+    --muted: #6a6e74;
+    --faint: #a2a6ac;
+    --bg: #ffffff;
+    --soft: #fafafa;
+    --line: #ececec;
+    --line-2: #e2e2e2;
+    --accent: #2440ff;
+    --c-person:#e11d48; --c-pnr:#be123c; --c-plats:#2563eb; --c-org:#7c3aed;
+    --c-tel:#0891b2; --c-epost:#059669; --c-ip:#4f46e5; --c-diagnos:#b45309; --c-ovrigt:#64748b;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; font-family: "Archivo", sans-serif; color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+  .app { height: 100vh; display: flex; flex-direction: column; }
+
+  header { display: flex; align-items: flex-end; gap: 16px; padding: 22px 34px 18px; border-bottom: 1px solid var(--line); }
+  .logo { width: 38px; height: 38px; flex: none; margin-bottom: 4px; }
+  .brand h1 { font-family: "Instrument Serif", serif; font-weight: 400; font-size: 38px; line-height: .9; margin: 0; letter-spacing: .2px; }
+  .brand p { margin: 6px 0 0; font-size: 13px; color: var(--muted); letter-spacing: .2px; }
+  .spacer { flex: 1; }
+  .lockbadge { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .lockbadge svg { width: 14px; height: 14px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.15); }
+
+  .layout { flex: 1; display: grid; grid-template-columns: 290px 1fr; overflow: hidden; }
+  .sidebar { padding: 26px 28px; overflow: auto; border-right: 1px solid var(--line); }
+  .sidebar section { margin-bottom: 30px; animation: fade .5s both; }
+  .sidebar section:nth-child(2){animation-delay:.06s} .sidebar section:nth-child(3){animation-delay:.12s}
+  h2 { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin: 0 0 13px; font-weight: 600; }
+
+  select, textarea { width: 100%; font: inherit; font-size: 14px; color: var(--ink); border: 1px solid var(--line-2); border-radius: 2px; padding: 11px 12px; background: var(--bg); }
+  select { appearance: none; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%); background-position: calc(100% - 18px) 19px, calc(100% - 13px) 19px; background-size: 5px 5px,5px 5px; background-repeat: no-repeat; }
+  textarea { resize: vertical; min-height: 76px; }
+
+  .filters { list-style: none; margin: 0; padding: 0; }
+  .filters li { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .filters li:last-child { border-bottom: none; }
+  .filters label { display: flex; align-items: center; gap: 11px; font-size: 14px; cursor: pointer; }
+  .dotc { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .count { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .check { width: 15px; height: 15px; accent-color: var(--ink); border-radius: 0; }
+
+  .aitoggle { display: flex; gap: 11px; align-items: flex-start; margin-top: 16px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+  .aitoggle em { font-style: normal; color: var(--faint); display: block; margin-top: 2px; font-size: 12px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .chip { font-size: 12px; border: 1px solid var(--line-2); border-radius: 2px; padding: 3px 9px; color: var(--muted); }
+
+  .review { padding: 26px 34px; display: flex; flex-direction: column; overflow: hidden; }
+  .review-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+  .review-head .meta { font-size: 13px; color: var(--muted); }
+  .review-head .meta strong { color: var(--ink); font-weight: 700; }
+  .actions { display: flex; gap: 8px; }
+  .btn { font: inherit; font-size: 13.5px; font-weight: 500; border: 1px solid var(--ink); background: var(--bg); color: var(--ink); border-radius: 2px; padding: 9px 15px; cursor: pointer; transition: .15s; display: inline-flex; align-items: center; gap: 8px; }
+  .btn:hover { background: var(--ink); color: #fff; }
+  .btn svg { width: 15px; height: 15px; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.1); }
+
+  .doc { flex: 1; overflow: auto; padding: 8px 2px 8px 0; line-height: 2.15; font-size: 17px; white-space: pre-wrap; max-width: 70ch; }
+  .doc .title { font-family: "Instrument Serif", serif; font-style: italic; font-size: 19px; color: var(--muted); }
+
+  .hl { cursor: pointer; position: relative; padding-bottom: 1px; border-bottom: 2px solid var(--hlc); transition: background .15s; }
+  .hl:hover { background: color-mix(in srgb, var(--hlc) 12%, transparent); }
+  .hl[data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 7px);
+    background: var(--ink); color: #fff; font-size: 12px; white-space: nowrap; padding: 4px 8px; border-radius: 2px; pointer-events: none; z-index: 5; font-family:"Archivo"; }
+  .person{--hlc:var(--c-person)} .pnr{--hlc:var(--c-pnr)} .plats{--hlc:var(--c-plats)} .org{--hlc:var(--c-org)}
+  .tel{--hlc:var(--c-tel)} .epost{--hlc:var(--c-epost)} .ip{--hlc:var(--c-ip)} .diagnos{--hlc:var(--c-diagnos)} .ovrigt{--hlc:var(--c-ovrigt)}
+
+  .reassure { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 9px; }
+  .reassure svg { width: 15px; height: 15px; }
+
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 2px; font-size: 13.5px; font-weight: 500; display: flex; align-items: center; gap: 9px; box-shadow: 0 18px 44px rgba(0,0,0,.28); animation: pop .4s both .4s; }
+  .toast svg { width: 16px; height: 16px; color: var(--accent); }
+  .toast .accentbar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+
+  @keyframes fade { from { opacity: 0; transform: translateY(7px) } to { opacity: 1; transform: none } }
+  @keyframes pop { from { opacity: 0; transform: translate(-50%,10px) } to { opacity: 1; transform: translate(-50%,0) } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <svg class="logo" viewBox="0 0 48 48" fill="none">
+      <rect x="11" y="6" width="22" height="32" rx="2" fill="#fff" stroke="#111214" stroke-width="2"/>
+      <rect x="16" y="13" width="12" height="3" fill="#111214"/>
+      <rect x="16" y="19" width="12" height="3" fill="#2440ff"/>
+      <rect x="16" y="25" width="7" height="3" fill="#c9ccd2"/>
+      <path d="M28 30l4-1 4 1v4.2c0 3.3-2.4 5.2-4 5.8-1.6-.6-4-2.5-4-5.8V30z" fill="#111214"/>
+      <path d="M30.4 34.4l1.4 1.4 2.4-2.6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="brand">
+      <h1>Avidentifierare</h1>
+      <p>Maskar känsliga uppgifter — tryggt nog att klistra in i en AI</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="lockbadge"><span class="dot"></span> Allt körs lokalt</div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <section>
+        <h2>Profil</h2>
+        <select><option>Skola / Elevhälsa</option><option>Allmän</option><option>Socialtjänst</option><option>Allt</option></select>
+      </section>
+      <section>
+        <h2>Kategorier</h2>
+        <ul class="filters">
+          <li><label><input class="check" type="checkbox" checked><span class="dotc" style="background:var(--c-person)"></span>Person</label><span class="count">3</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="dotc" style="background:var(--c-pnr)"></span>Personnummer</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="dotc" style="background:var(--c-plats)"></span>Plats</label><span class="count">2</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="dotc" style="background:var(--c-org)"></span>Organisation</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="dotc" style="background:var(--c-tel)"></span>Telefon</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="dotc" style="background:var(--c-epost)"></span>E-post</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="dotc" style="background:var(--c-ip)"></span>IP-adress</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="dotc" style="background:var(--c-diagnos)"></span>Diagnos</label><span class="count">5</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="dotc" style="background:var(--c-ovrigt)"></span>Övrigt (AI)</label><span class="count">1</span></li>
+        </ul>
+        <label class="aitoggle"><input class="check" type="checkbox" checked><span>Djupare granskning (AI)<em>Långsammare (~20 s), fångar fler ledtrådar</em></span></label>
+      </section>
+      <section>
+        <h2>Egen ordlista</h2>
+        <textarea placeholder="Lägg till ord att alltid maska. Ett per rad för flera."></textarea>
+        <div class="chips"><span class="chip">Projekt Solros</span><span class="chip">Avdelning 5</span></div>
+      </section>
+    </aside>
+
+    <main class="review">
+      <div class="review-head">
+        <div class="meta"><strong>15</strong> av 15 träffar avidentifieras</div>
+        <div class="actions">
+          <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Kopiera text</button>
+          <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>.txt</button>
+          <button class="btn">Word</button>
+        </div>
+      </div>
+
+      <div class="doc"><span class="title">Anteckning 2024-03-12</span>
+
+Patienten <span class="hl person" data-tip="→ Person 1">Anna Svensson</span> (personnummer <span class="hl pnr" data-tip="→ Personnummer 1">811228-9874</span>) bor i <span class="hl plats" data-tip="→ Plats 1">Lund</span> och arbetar på <span class="hl ovrigt" data-tip="AI · → Övrigt 1">Volvo</span> i <span class="hl plats" data-tip="→ Plats 2">Göteborg</span>. Hon kontaktade mottagningen via telefon <span class="hl tel" data-tip="→ Telefon 1">070-123 45 67</span> samt e-post <span class="hl epost" data-tip="→ E-post 1">anna.svensson@example.se</span>.
+
+Hennes make <span class="hl person" data-tip="→ Person 2">Erik Svensson</span> följde med vid besöket. Remiss skickades till doktor <span class="hl person" data-tip="→ Person 3">Johan Lindqvist</span> på <span class="hl org" data-tip="→ Organisation 1">Skånes universitetssjukhus</span>.
+
+Eleven har sedan tidigare en <span class="hl diagnos" data-tip="→ Diagnos 1">ADHD</span>-diagnos (<span class="hl diagnos" data-tip="→ Diagnos 2">F90.0</span>) och utreds nu för <span class="hl diagnos" data-tip="→ Diagnos 3">autism</span>. Modern uppger även återkommande <span class="hl diagnos" data-tip="→ Diagnos 4">ångest</span> och en konstaterad <span class="hl diagnos" data-tip="→ Diagnos 5">dyslexi</span>.
+
+Systemloggen visade inloggning från IP-adress <span class="hl ip" data-tip="→ IP-adress 1">192.168.10.45</span>.</div>
+
+      <div class="reassure">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.4 7.7-8 9-4.6-1.3-8-4-8-9V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+        Granska alltid träffarna innan du delar texten. Ingen automatik fångar 100 %.
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast"><span class="accentbar"></span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 13l4 4L19 7"/></svg>
+  Kopierat till urklipp
+</div>
+</body>
+</html>

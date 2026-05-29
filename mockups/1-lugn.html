@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Avidentifierare — Lugn & förtroendeingivande</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #16242e;
+    --muted: #5b6e79;
+    --faint: #8aa0ab;
+    --bg: #e9eff2;
+    --panel: #ffffff;
+    --line: #dbe5ea;
+    --blue: #1e3a5f;
+    --blue-2: #295784;
+    --teal: #2c7a7b;
+    --shadow: 0 1px 2px rgba(22,36,46,.04), 0 8px 24px rgba(22,36,46,.06);
+    --c-person: #b8556e; --c-pnr: #9e3346; --c-plats: #2f6f9f; --c-org: #6a5aa6;
+    --c-tel: #1f8597; --c-epost: #2c8a66; --c-ip: #4d5fb0; --c-diagnos: #a9692b; --c-ovrigt: #687886;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "IBM Plex Sans", sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(44,122,123,.10), transparent 60%),
+      radial-gradient(900px 500px at -5% 110%, rgba(30,58,95,.08), transparent 55%),
+      var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { height: 100vh; display: flex; flex-direction: column; }
+
+  /* Header */
+  header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 26px;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue-2) 100%);
+    color: #fff;
+    box-shadow: 0 6px 22px rgba(30,58,95,.18);
+  }
+  .logo { width: 40px; height: 40px; flex: none; }
+  .brand h1 {
+    font-family: "Fraunces", serif; font-weight: 500;
+    font-size: 23px; margin: 0; letter-spacing: .2px;
+  }
+  .brand p { margin: 2px 0 0; font-size: 12.5px; color: #b9cbdc; }
+  .spacer { flex: 1; }
+  .lockbadge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12.5px; color: #d7e6f2;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.18);
+    padding: 7px 12px; border-radius: 999px; backdrop-filter: blur(4px);
+  }
+  .lockbadge svg { width: 14px; height: 14px; }
+
+  /* Layout */
+  .layout { flex: 1; display: grid; grid-template-columns: 312px 1fr; gap: 18px; padding: 18px; overflow: hidden; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+  .sidebar { padding: 6px 18px 20px; overflow: auto; }
+  .sidebar section { margin-top: 20px; animation: rise .5s both; }
+  .sidebar section:nth-child(2){ animation-delay:.05s } .sidebar section:nth-child(3){ animation-delay:.1s } .sidebar section:nth-child(4){ animation-delay:.15s }
+  h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--faint); margin: 0 0 10px; font-weight: 600; }
+
+  .select {
+    position: relative;
+  }
+  select, textarea {
+    width: 100%; font: inherit; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+    background: #fbfdfe;
+  }
+  select { appearance: none; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 18px) 18px, calc(100% - 13px) 18px; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+  textarea { resize: vertical; min-height: 78px; }
+
+  .filters { list-style: none; margin: 0; padding: 0; }
+  .filters li { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; }
+  .filters label { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .count { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .check { width: 16px; height: 16px; accent-color: var(--teal); }
+
+  .aitoggle { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; font-size: 13px; color: var(--muted);
+    background: linear-gradient(180deg, rgba(44,122,123,.06), rgba(44,122,123,.02)); border: 1px solid #d3e6e6; border-radius: 10px; padding: 11px; }
+  .aitoggle em { font-style: normal; color: var(--faint); display: block; margin-top: 2px; font-size: 12px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { font-size: 12.5px; background: #f1f5f7; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--muted); }
+
+  /* Review */
+  .review { padding: 20px 22px; display: flex; flex-direction: column; overflow: hidden; }
+  .review-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+  .review-head .meta { font-size: 13.5px; color: var(--muted); }
+  .review-head .meta strong { color: var(--ink); font-weight: 600; }
+  .actions { display: flex; gap: 9px; }
+  .btn { font: inherit; font-size: 14px; border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 10px; padding: 9px 14px; cursor: pointer; transition: .18s; display: inline-flex; align-items: center; gap: 7px; }
+  .btn:hover { border-color: var(--teal); color: var(--teal); }
+  .btn svg { width: 15px; height: 15px; }
+  .btn.primary { background: linear-gradient(135deg, var(--teal), #246a6b); border-color: transparent; color: #fff; box-shadow: 0 6px 16px rgba(44,122,123,.28); }
+  .btn.primary:hover { color: #fff; filter: brightness(1.05); }
+
+  .doc {
+    flex: 1; overflow: auto; border: 1px solid var(--line); border-radius: 12px;
+    background:
+      linear-gradient(180deg, #ffffff, #fcfeff);
+    padding: 26px 30px; line-height: 2.0; font-size: 15.5px; white-space: pre-wrap;
+    box-shadow: inset 0 1px 0 #fff;
+  }
+  .doc .title { font-family: "Fraunces", serif; font-size: 16px; color: var(--muted); }
+
+  .hl { border-radius: 5px; padding: 1px 4px; cursor: pointer; transition: .15s; box-decoration-break: clone; -webkit-box-decoration-break: clone; position: relative; }
+  .hl { background: color-mix(in srgb, var(--hlc) 13%, transparent); box-shadow: inset 0 -2px 0 var(--hlc); }
+  .hl:hover { background: color-mix(in srgb, var(--hlc) 22%, transparent); }
+  .hl[data-tip]:hover::after {
+    content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+    background: var(--ink); color: #fff; font-size: 12px; font-family: "IBM Plex Sans"; white-space: nowrap;
+    padding: 5px 9px; border-radius: 7px; box-shadow: var(--shadow); line-height: 1.4; pointer-events: none; z-index: 5;
+  }
+  .person{--hlc:var(--c-person)} .pnr{--hlc:var(--c-pnr)} .plats{--hlc:var(--c-plats)} .org{--hlc:var(--c-org)}
+  .tel{--hlc:var(--c-tel)} .epost{--hlc:var(--c-epost)} .ip{--hlc:var(--c-ip)} .diagnos{--hlc:var(--c-diagnos)} .ovrigt{--hlc:var(--c-ovrigt)}
+
+  .reassure { margin-top: 14px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .reassure svg { width: 15px; height: 15px; color: var(--teal); }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 14px;
+    display: flex; align-items: center; gap: 9px; box-shadow: 0 16px 40px rgba(0,0,0,.25); animation: pop .4s both .4s; }
+  .toast svg { width: 17px; height: 17px; color: #7fd1b0; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <svg class="logo" viewBox="0 0 48 48" fill="none">
+      <rect x="3" y="3" width="42" height="42" rx="12" fill="#ffffff" opacity="0.10"/>
+      <rect x="11" y="8" width="22" height="30" rx="4" fill="#ffffff"/>
+      <rect x="15" y="14" width="14" height="2.6" rx="1.3" fill="#295784"/>
+      <rect x="15" y="19" width="14" height="2.6" rx="1.3" fill="#2c7a7b"/>
+      <rect x="15" y="24" width="9" height="2.6" rx="1.3" fill="#cdd8df"/>
+      <path d="M30 27c0-1 .8-1.6 1.7-1.6h6.6c.9 0 1.7.7 1.7 1.6v4.2c0 4-2.9 6.4-5 7.2-2.1-.8-5-3.2-5-7.2V27z" fill="#2c7a7b" stroke="#fff" stroke-width="1.4"/>
+      <path d="M32.6 31.4l1.6 1.6 3-3.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="brand">
+      <h1>Avidentifierare</h1>
+      <p>Maskar känsliga uppgifter — tryggt nog att klistra in i en AI</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="lockbadge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      Allt körs lokalt på din dator
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="panel sidebar">
+      <section>
+        <h2>Profil</h2>
+        <div class="select"><select><option>Skola / Elevhälsa</option><option>Allmän</option><option>Socialtjänst</option><option>Allt</option></select></div>
+      </section>
+      <section>
+        <h2>Kategorier</h2>
+        <ul class="filters">
+          <li><label><input class="check" type="checkbox" checked><span class="swatch" style="background:var(--c-person)"></span>Person</label><span class="count">3</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="swatch" style="background:var(--c-pnr)"></span>Personnummer</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="swatch" style="background:var(--c-plats)"></span>Plats</label><span class="count">2</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="swatch" style="background:var(--c-org)"></span>Organisation</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="swatch" style="background:var(--c-tel)"></span>Telefon</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="swatch" style="background:var(--c-epost)"></span>E-post</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="swatch" style="background:var(--c-ip)"></span>IP-adress</label><span class="count">1</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="swatch" style="background:var(--c-diagnos)"></span>Diagnos</label><span class="count">5</span></li>
+          <li><label><input class="check" type="checkbox" checked><span class="swatch" style="background:var(--c-ovrigt)"></span>Övrigt (AI)</label><span class="count">1</span></li>
+        </ul>
+        <label class="aitoggle"><input class="check" type="checkbox" checked><span>Djupare granskning (AI)<em>Långsammare (~20 s), fångar fler ledtrådar</em></span></label>
+      </section>
+      <section>
+        <h2>Egen ordlista</h2>
+        <textarea placeholder="Lägg till ord att alltid maska. Ett per rad för flera."></textarea>
+        <div class="chips"><span class="chip">Projekt Solros</span><span class="chip">Avdelning 5</span></div>
+      </section>
+    </aside>
+
+    <main class="panel review">
+      <div class="review-head">
+        <div class="meta"><strong>15</strong> av 15 träffar avidentifieras</div>
+        <div class="actions">
+          <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Kopiera text</button>
+          <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>Spara som .txt</button>
+          <button class="btn">Spara som Word</button>
+        </div>
+      </div>
+
+      <div class="doc"><span class="title">Anteckning 2024-03-12</span>
+
+Patienten <span class="hl person" data-tip="→ Person 1">Anna Svensson</span> (personnummer <span class="hl pnr" data-tip="→ Personnummer 1">811228-9874</span>) bor i <span class="hl plats" data-tip="→ Plats 1">Lund</span> och arbetar på <span class="hl ovrigt" data-tip="AI · → Övrigt 1">Volvo</span> i <span class="hl plats" data-tip="→ Plats 2">Göteborg</span>. Hon kontaktade mottagningen via telefon <span class="hl tel" data-tip="→ Telefon 1">070-123 45 67</span> samt e-post <span class="hl epost" data-tip="→ E-post 1">anna.svensson@example.se</span>.
+
+Hennes make <span class="hl person" data-tip="→ Person 2">Erik Svensson</span> följde med vid besöket. Remiss skickades till doktor <span class="hl person" data-tip="→ Person 3">Johan Lindqvist</span> på <span class="hl org" data-tip="→ Organisation 1">Skånes universitetssjukhus</span>.
+
+Eleven har sedan tidigare en <span class="hl diagnos" data-tip="→ Diagnos 1">ADHD</span>-diagnos (<span class="hl diagnos" data-tip="→ Diagnos 2">F90.0</span>) och utreds nu för <span class="hl diagnos" data-tip="→ Diagnos 3">autism</span>. Modern uppger även återkommande <span class="hl diagnos" data-tip="→ Diagnos 4">ångest</span> och en konstaterad <span class="hl diagnos" data-tip="→ Diagnos 5">dyslexi</span>.
+
+Systemloggen visade inloggning från IP-adress <span class="hl ip" data-tip="→ IP-adress 1">192.168.10.45</span>.</div>
+
+      <div class="reassure">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.4 7.7-8 9-4.6-1.3-8-4-8-9V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+        Granska alltid träffarna innan du delar texten. Ingen automatik fångar 100 %.
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 13l4 4L19 7"/></svg>
+  Kopierat till urklipp
+</div>
+</body>
+</html>

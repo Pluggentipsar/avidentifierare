@@ -1,0 +1,14 @@
+Anteckning 2024-03-12
+
+Patienten Anna Svensson (personnummer 811228-9874) bor i Lund och arbetar
+på Volvo i Göteborg. Hon kontaktade mottagningen via telefon 070-123 45 67
+samt e-post anna.svensson@example.se.
+
+Hennes make Erik Svensson följde med vid besöket. Remiss skickades till
+doktor Johan Lindqvist på Skånes universitetssjukhus. Uppföljning bokades
+sedan 2024.
+
+Eleven har sedan tidigare en ADHD-diagnos (F90.0) och utreds nu för autism.
+Modern uppger även återkommande ångest och en konstaterad dyslexi.
+
+Systemloggen visade inloggning från IP-adress 192.168.10.45.
